@@ -2,6 +2,7 @@ package com.example.oauthapp
 
 import com.example.oauthapp.data.AbstractCloudDataSource
 import com.example.oauthapp.data.AccessTokenInvalidException
+import com.example.oauthapp.data.CloudObject
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -100,4 +101,4 @@ private interface ExampleService {
 
 private data class ExampleCloudObject(
     val data: String
-)
+) : CloudObject
