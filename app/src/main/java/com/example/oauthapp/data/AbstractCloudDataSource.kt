@@ -15,7 +15,7 @@ abstract class AbstractCloudDataSource {
             return response.body()!!
         } catch (e: Exception) {
             if (response?.code() == 401)
-                throw AccessTokenInvalidException()
+                throw TokenInvalidException()
             throw e
         }
     }

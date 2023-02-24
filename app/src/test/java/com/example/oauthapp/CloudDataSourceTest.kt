@@ -1,8 +1,6 @@
 package com.example.oauthapp
 
-import com.example.oauthapp.data.AbstractCloudDataSource
-import com.example.oauthapp.data.AccessTokenInvalidException
-import com.example.oauthapp.data.CloudObject
+import com.example.oauthapp.data.TokenInvalidException
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -11,8 +9,7 @@ import org.junit.Test
 import retrofit2.Response
 import java.net.UnknownHostException
 
-
-class CloudDataSourceTest {
+class CloudDataSourceTest : AbstractTest() {
 
     @Test
     fun `success response`() = runBlocking {
@@ -37,7 +34,7 @@ class CloudDataSourceTest {
 
     }
 
-    @Test(expected = AccessTokenInvalidException::class)
+    @Test(expected = TokenInvalidException::class)
     fun `token invalid response`() : Unit = runBlocking {
 
         val service = ExampleService.Fake()
@@ -63,42 +60,3 @@ class CloudDataSourceTest {
     }
 
 }
-
-private interface ExampleObjectCloudDataSource {
-
-    suspend fun fetch(): ExampleCloudObject
-
-    class Base(
-        private val service: ExampleService
-    ) : AbstractCloudDataSource(), ExampleObjectCloudDataSource {
-
-        override suspend fun fetch(): ExampleCloudObject {
-            return super.handle {
-                service.fetch()
-            }
-        }
-    }
-
-}
-
-private interface ExampleService {
-
-    suspend fun fetch(): Response<ExampleCloudObject>
-
-    class Fake : ExampleService {
-
-        var response: Response<ExampleCloudObject>? = null
-        var exception: Exception? = null
-
-        override suspend fun fetch(): Response<ExampleCloudObject> {
-            return if (exception == null)
-                response!!
-            else
-                throw exception!!
-        }
-    }
-}
-
-private data class ExampleCloudObject(
-    val data: String
-) : CloudObject
