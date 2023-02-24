@@ -11,12 +11,13 @@ abstract class AbstractTest {
         suspend fun fetch(): ExampleCloudObject
 
         class Base(
-            private val service: ExampleService
+            private val service: ExampleService,
+//            private val tokenStorage : TokenStorage.ReadAccess
         ) : AbstractCloudDataSource(), ExampleObjectCloudDataSource {
 
             override suspend fun fetch(): ExampleCloudObject {
                 return super.handle {
-                    service.fetch()
+                    service.fetch(/*tokenStorage.accessToken()*/)
                 }
             }
         }

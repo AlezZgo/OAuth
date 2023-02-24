@@ -31,7 +31,6 @@ class CloudDataSourceTest : AbstractTest() {
         )
 
         assertEquals(expected, actual)
-
     }
 
     @Test(expected = TokenInvalidException::class)
@@ -56,7 +55,5 @@ class CloudDataSourceTest : AbstractTest() {
         service.exception = UnknownHostException()
 
         ExampleObjectCloudDataSource.Base(service).fetch()
-
     }
-
 }

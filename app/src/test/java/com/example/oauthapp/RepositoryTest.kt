@@ -1,12 +1,12 @@
 package com.example.oauthapp
 
-import com.example.oauthapp.data.TokenInvalidException
+import com.example.oauthapp.data.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.net.UnknownHostException
 
 class RepositoryTest : AbstractTest() {
-    //todo 2 cases with no internet connection
 
     @Test
     fun `success with valid access token`() = runBlocking {
@@ -22,7 +22,7 @@ class RepositoryTest : AbstractTest() {
         )
 
         val actual = repository.fetch()
-        val expected = ExampleCloudObject("success")
+        val expected = ExampleRepository.ExampleDomainObject.Base(ExampleCloudObject("success"))
 
         assertEquals(expected, actual)
         assertEquals(1, fakeExampleObjectCloudDataSource.fetchCount)
@@ -51,16 +51,15 @@ class RepositoryTest : AbstractTest() {
         )
 
         val actual = repository.fetch()
-        val expected = ExampleCloudObject("success")
+        val expected = ExampleRepository.ExampleDomainObject.Base(ExampleCloudObject("success"))
 
         assertEquals(expected, actual)
         assertEquals(2, fakeExampleObjectCloudDataSource.fetchCount)
         assertEquals(1, fakeRefreshCloudDataSource.refreshCount)
-
     }
 
     @Test(expected = TokenInvalidException::class)
-    fun `failed to refresh tokens`() : Unit = runBlocking {
+    fun `failed to refresh tokens`(): Unit = runBlocking {
         val fakeRefreshCloudDataSource = FakeRefreshCloudDataSource()
         val fakeExampleObjectCloudDataSource = FakeExampleObjectCloudDataSource()
 
@@ -76,6 +75,48 @@ class RepositoryTest : AbstractTest() {
         )
 
         repository.fetch()
+    }
+
+    @Test(expected = NoConnectionException::class)
+    fun `internet failed`(): Unit = runBlocking {
+        val fakeRefreshCloudDataSource = FakeRefreshCloudDataSource()
+        val fakeExampleObjectCloudDataSource = FakeExampleObjectCloudDataSource()
+
+        fakeExampleObjectCloudDataSource.list.add(
+            TokenInvalidException()
+        )
+
+        fakeRefreshCloudDataSource.exception = UnknownHostException()
+
+        val repository = ExampleRepository.Base(
+            fakeRefreshCloudDataSource,
+            fakeExampleObjectCloudDataSource
+        )
+
+        repository.fetch()
+    }
+
+    @Test
+    fun `CloudDataSource no internet connection`(): Unit = runBlocking {
+        val fakeRefreshCloudDataSource = FakeRefreshCloudDataSource()
+        val fakeExampleObjectCloudDataSource = FakeExampleObjectCloudDataSource()
+
+        fakeExampleObjectCloudDataSource.list.add(
+            UnknownHostException()
+        )
+
+        val repository = ExampleRepository.Base(
+            fakeRefreshCloudDataSource,
+            fakeExampleObjectCloudDataSource
+        )
+
+        try {
+            repository.fetch()
+        } catch (e: Exception) {
+            assertEquals(NoConnectionException::class, e::class)
+            assertEquals(0, fakeRefreshCloudDataSource.refreshCount)
+        }
+
     }
 
     private class FakeRefreshCloudDataSource() : RefreshCloudDataSource {
@@ -112,24 +153,31 @@ class RepositoryTest : AbstractTest() {
 
     private interface ExampleRepository {
 
-        suspend fun fetch(): ExampleCloudObject
+        suspend fun fetch(): ExampleDomainObject
 
         class Base(
-            refreshCloudDataSource: RefreshCloudDataSource,
+            private val refreshCloudDataSource: RefreshCloudDataSource,
             private val exampleObjectCloudDataSource: ExampleObjectCloudDataSource,
+            handleError: HandleError<Exception> = HandleError.Domain(),
+            handleRefresh: HandleRefresh = HandleRefresh.Base(refreshCloudDataSource)
         ) : AbstractRepository(
-            refreshCloudDataSource
+            handleError, handleRefresh
         ), ExampleRepository {
 
-            override suspend fun fetch(): ExampleCloudObject {
-                return super.handle {
-                    exampleObjectCloudDataSource.fetch()
-                }
+            override suspend fun fetch() = super.handle {
+
+                val result = exampleObjectCloudDataSource.fetch()
+
+                ExampleDomainObject.Base(result)
             }
         }
 
+        interface ExampleDomainObject {
+            data class Base(
+                val cloudObject: ExampleCloudObject
+            ) : ExampleDomainObject
+        }
 
     }
-
 }
 
