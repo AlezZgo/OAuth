@@ -78,7 +78,7 @@ class RepositoryTest : AbstractTest() {
     }
 
     @Test(expected = NoConnectionException::class)
-    fun `internet failed`(): Unit = runBlocking {
+    fun `internet connection failed when trying to get refresh token`(): Unit = runBlocking {
         val fakeRefreshCloudDataSource = FakeRefreshCloudDataSource()
         val fakeExampleObjectCloudDataSource = FakeExampleObjectCloudDataSource()
 
@@ -97,7 +97,7 @@ class RepositoryTest : AbstractTest() {
     }
 
     @Test
-    fun `CloudDataSource no internet connection`(): Unit = runBlocking {
+    fun `internet connection failed when trying to get auth token`(): Unit = runBlocking {
         val fakeRefreshCloudDataSource = FakeRefreshCloudDataSource()
         val fakeExampleObjectCloudDataSource = FakeExampleObjectCloudDataSource()
 

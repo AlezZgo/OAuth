@@ -41,17 +41,14 @@ interface HandleRefresh {
 }
 
 interface HandleError<T : Any> {
-
     fun handle(exception: Exception): T
 
     class Domain : HandleError<Exception> {
-        override fun handle(exception: Exception): Exception {
-            return when (exception) {
-                is UnknownHostException -> NoConnectionException()
-                else -> exception
-            }
-        }
 
+        override fun handle(exception: Exception) = when (exception) {
+            is UnknownHostException -> NoConnectionException()
+            else -> exception
+        }
     }
 }
 
